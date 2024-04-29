@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+
+  db:
+    image: postgres:14.1-alpine
+    container_name: db
+    restart: unless-stopped
+    expose:
+      - 5432
+    volumes:
+      - .postgresdata:/var/lib/postgresql
+    environment:
+        POSTGRES_HOST_AUTH_METHOD: trust
+        POSTGRES_USER: dbuser
+        POSTGRES_PASSWORD: test
+        POSTGRES_SERVER: db
+        POSTGRES_DB_PORT: 5432
+        POSTGRES_DB: db
+    healthcheck:
+        test: pg_isready -U dbuser -d db
+
+  dns-system:
+      depends_on:
+        - db
+      restart: always
+      build: ./
+      ports:
+        - "8080:8080"
+      environment:
+        POSTGRES_SERVER: db
+        POSTGRES_DB: db
+        POSTGRES_PASSWORD: test
+        POSTGRES_USER: dbuser
+
+volumes:
+  .postgresdata:
+    driver: local
+
+networks:
+  dns-system:
+    driver: bridge
